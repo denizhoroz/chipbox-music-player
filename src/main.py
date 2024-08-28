@@ -1,7 +1,8 @@
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog, font
+from tkinter import ttk, messagebox, filedialog
 import pygame
 import os
+import sys
 
 # === Constants === #
 WIDTH = 720
@@ -20,14 +21,13 @@ FOOTER_FONT = ('Arial', 40, 'bold')
 
 # color palette for reference: https://colorhunt.co/palette/d3ebcdaedbce839aa8635666
 
-
 # === Interface Configuration === #
 class Interface():
     def __init__(self, root) -> None:
         self.root = root
         self.root.geometry(f'{WIDTH}x{HEIGHT}')
         self.root.resizable(False, False)
-        self.root.iconbitmap('./src/assets/ico32.ico')
+        self.root.iconbitmap('assets/ico32.ico')
         self.initialize_widgets()
         self.initialize_player()
 
@@ -197,7 +197,7 @@ class Interface():
         self.import_button.place(x=480, y=420)
 
         # Initialize footer
-        self.footer = tk.PhotoImage(file='./src/assets/footer.png')
+        self.footer = tk.PhotoImage(file='assets/footer.png')
 
         self.footer_text = tk.Label(self.frame_main,
                                     image=self.footer,
