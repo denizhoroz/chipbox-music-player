@@ -1,1 +1,7 @@
+# Ignore Python virtual environment
 venv/
+
+# Ignore vim files
+*~
+*.swp
+*.swo
