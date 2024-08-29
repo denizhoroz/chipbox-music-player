@@ -28,6 +28,7 @@ class Interface():
         self.root.geometry(f'{WIDTH}x{HEIGHT}')
         self.root.resizable(False, False)
         self.root.iconbitmap('assets/ico32.ico')
+
         self.initialize_widgets()
         self.initialize_player()
 
@@ -156,6 +157,7 @@ class Interface():
         self.var_play = tk.StringVar()
         self.var_play.set('▶️')
         self.paused = False
+        self.time_paused = 0
 
         self.button_pause = tk.Button(self.frame_main,
                                      textvariable=self.var_play,
@@ -186,6 +188,7 @@ class Interface():
                                  bg=FG_COLOR,)
         self.frame_playlist.place(x=480, y=20)
 
+        self.song_dict = {}
         self.playlist = tk.Listbox(self.frame_playlist,
                                    width=36,
                                    height=24)
@@ -218,11 +221,10 @@ class Interface():
         pygame.mixer.init()
 
     def play_selected(self, event):
-        selected_song = self.playlist.get(self.playlist.curselection())
+        selected_song = list(self.song_dict.values())[self.playlist.curselection()[0]]
         self.current_song = selected_song
         pygame.mixer.music.load(self.current_song)
         self.update_song_info()
-        self.song_length = pygame.mixer.Sound(self.current_song).get_length()
         self.progress.config(to=self.song_length)
         pygame.mixer.music.play()
         self.song_start_time = time.time()
@@ -234,7 +236,7 @@ class Interface():
         if selection:
             ind_prev_song = int(selection[0]) - 1
             if ind_prev_song >= 0:
-                prev_song = self.playlist.get(ind_prev_song)
+                prev_song = list(self.song_dict.values())[ind_prev_song]
                 self.current_song = prev_song
                 self.playlist.selection_set(ind_prev_song)
                 self.playlist.selection_clear(selection)
@@ -264,7 +266,9 @@ class Interface():
     def pause_song(self):
         if self.paused:
             pygame.mixer.music.unpause()
+            self.time_paused = 0
             self.paused = False
+            self.update_progress()
             self.var_play.set('⏸️')
         elif self.is_finished():
             pygame.mixer.music.play()
@@ -272,6 +276,7 @@ class Interface():
             self.var_play.set('⏸️')
         else:
             pygame.mixer.music.pause()
+            self.time_paused = time.time()
             self.paused = True
             self.var_play.set('▶️')
                 
@@ -280,7 +285,7 @@ class Interface():
         if selection:
             ind_next_song = int(selection[0]) + 1
             if ind_next_song < self.playlist.size():
-                next_song = self.playlist.get(ind_next_song)
+                next_song = list(self.song_dict.values())[ind_next_song]
                 self.current_song = next_song
                 self.playlist.selection_set(ind_next_song)
                 self.playlist.selection_clear(selection)
@@ -299,15 +304,19 @@ class Interface():
     def update_progress(self, val=None):
         global_current_time = time.time() 
         if val:
-            song_time_elapsed = float(val)
-            pygame.mixer.music.set_pos(song_time_elapsed)
+            self.song_time_elapsed = float(val)
+            pygame.mixer.music.set_pos(self.song_time_elapsed)
             self.progress.config(value=val)
-            self.song_start_time = global_current_time - song_time_elapsed
+            self.song_start_time = global_current_time - self.song_time_elapsed
         else:
-            song_time_elapsed = global_current_time - self.song_start_time
-            self.progress.config(value=song_time_elapsed)
-            self.root.after(1000, self.update_progress)
-        prog_minutes, prog_seconds = divmod(int(float(song_time_elapsed)), 60)
+            if self.paused:
+                time_since_paused = global_current_time - self.song_time_elapsed
+            else:
+                self.song_time_elapsed = global_current_time - self.song_start_time 
+                self.progress.config(value=self.song_time_elapsed)
+                self.root.after(1000, self.update_progress)
+            
+        prog_minutes, prog_seconds = divmod(int(float(self.song_time_elapsed)), 60)
         total_minutes, total_seconds = divmod(int(self.song_length), 60) # change here
         self.duration.config(text='{:02d}:{:02d} /\n   {:02d}:{:02d}'.format(prog_minutes, prog_seconds, total_minutes, total_seconds))
 
@@ -317,12 +326,15 @@ class Interface():
 
     def update_song_info(self):
         self.var_song_info.set(os.path.basename(self.current_song)[0:80])
+        self.song_length = pygame.mixer.Sound(self.current_song).get_length()
 
     def import_music(self):
         file_paths = filedialog.askopenfilenames()
         for file_path in file_paths:
-            if file_path not in self.playlist.get(0, tk.END):
-                self.playlist.insert(tk.END, file_path)
+            if file_path not in self.song_dict.values():
+                song_name = os.path.basename(file_path)
+                self.song_dict[song_name] = file_path
+                self.playlist.insert(tk.END, song_name)
 
 
 if __name__ == '__main__':

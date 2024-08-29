@@ -5,3 +5,8 @@ venv/
 *~
 *.swp
 *.swo
+
+# Ignore executable build files
+build/
+dist/
+main.spec
