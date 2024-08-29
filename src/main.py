@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import pygame
 import os
-import sys
+import time
 
 # === Constants === #
 WIDTH = 720
@@ -98,13 +98,22 @@ class Interface():
 
         self.var_progress = tk.DoubleVar().set(value=100)
 
-        self.progress = ttk.Progressbar(self.trackbar,
-                                  length=300,
-                                  orient='horizontal',
-                                  mode='determinate',
-                                  style='TProgressbar'
-                                  )
-        self.progress.place(x=0, y=-2)
+        # self.progress = ttk.Progressbar(self.trackbar,
+        #                           length=300,
+        #                           orient='horizontal',
+        #                           mode='determinate',
+        #                           style='TProgressbar'
+        #                           )
+        # self.progress.place(x=0, y=-2)
+        
+        self.progress = ttk.Scale(self.trackbar,
+                                 length=300,
+                                 orient='horizontal',
+                                 from_=0,
+                                 to=1,
+                                 variable=self.var_progress,
+                                 command=self.update_progress)
+        self.progress.place(x=0, y=0)
 
         # Initialize the volume bar
         self.volumebar = tk.Frame(self.frame_main,
@@ -213,8 +222,10 @@ class Interface():
         self.current_song = selected_song
         pygame.mixer.music.load(self.current_song)
         self.update_song_info()
-        self.progress['maximum'] = pygame.mixer.Sound(self.current_song).get_length()
+        self.song_length = pygame.mixer.Sound(self.current_song).get_length()
+        self.progress.config(to=self.song_length)
         pygame.mixer.music.play()
+        self.song_start_time = time.time()
         self.update_progress()
         self.var_play.set('⏸️')
 
@@ -230,6 +241,7 @@ class Interface():
                 pygame.mixer.music.load(self.current_song)
                 self.update_song_info()
                 pygame.mixer.music.play()
+                self.song_start_time = time.time()
                 self.var_play.set('⏸️')
             else:
                 messagebox.showwarning('Warning', 'This is the first song.')
@@ -274,6 +286,7 @@ class Interface():
                 self.playlist.selection_clear(selection)
                 pygame.mixer.music.load(self.current_song)
                 pygame.mixer.music.play()
+                self.song_start_time = time.time()
                 self.update_song_info()
                 self.var_play.set('⏸️')
             else:
@@ -283,15 +296,24 @@ class Interface():
         volume = float(val)
         pygame.mixer.music.set_volume(volume)
 
-    def update_progress(self):
-        current_time = pygame.mixer.music.get_pos() / 1000
-        self.progress['value'] = current_time
-        prog_minutes, prog_seconds = divmod(int(current_time), 60)
-        total_minutes, total_seconds = divmod(int(self.progress['maximum']), 60)
+    def update_progress(self, val=None):
+        global_current_time = time.time() 
+        if val:
+            song_time_elapsed = float(val)
+            pygame.mixer.music.set_pos(song_time_elapsed)
+            self.progress.config(value=val)
+            self.song_start_time = global_current_time - song_time_elapsed
+        else:
+            song_time_elapsed = global_current_time - self.song_start_time
+            self.progress.config(value=song_time_elapsed)
+            self.root.after(1000, self.update_progress)
+        prog_minutes, prog_seconds = divmod(int(float(song_time_elapsed)), 60)
+        total_minutes, total_seconds = divmod(int(self.song_length), 60) # change here
         self.duration.config(text='{:02d}:{:02d} /\n   {:02d}:{:02d}'.format(prog_minutes, prog_seconds, total_minutes, total_seconds))
-        self.root.after(1000, self.update_progress)
+
         if self.is_finished() and not self.is_lastsong() and not self.paused:
             self.play_next()
+
 
     def update_song_info(self):
         self.var_song_info.set(os.path.basename(self.current_song)[0:80])
