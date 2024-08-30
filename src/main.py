@@ -31,7 +31,9 @@ class Interface():
         self.root.iconbitmap('assets/ico32.ico')
 
         self.var_theme_is = 'light'
+        self.var_theme = tk.StringVar()
         self.configure_theme(theme='light')
+
         self.initialize_widgets()
         self.initialize_player()
 
@@ -51,6 +53,7 @@ class Interface():
             SHADOW_COLOR = '#ECDFCC'
             self.footer = tk.PhotoImage(file='assets/footer_dark.png')
             TEXT_COLOR = 'white'
+            self.var_theme.set('☀️')
         else:
             # === light === #
             BG_COLOR = '#D3EBCD'
@@ -59,6 +62,7 @@ class Interface():
             SHADOW_COLOR = '#635666'
             self.footer = tk.PhotoImage(file='assets/footer_light.png')
             TEXT_COLOR = 'black'
+            self.var_theme.set('🌙')
         BUTTON_TEXT_COLOR = SHADOW_COLOR
 
     def initialize_widgets(self):
@@ -233,9 +237,6 @@ class Interface():
         self.import_button.place(x=480, y=420)
         
         # Initialize theme toggle button
-        self.var_theme = tk.StringVar()
-        self.var_theme.set('☀️')
-
         self.theme_toggle = tk.Button(self.frame_main,
                                       textvariable=self.var_theme,
                                       anchor='w',
@@ -377,14 +378,12 @@ class Interface():
         if self.var_theme_is == 'light':
             self.var_theme.set('🌙')
             self.var_theme_is = 'dark'
-            print(self.var_theme_is)
             self.configure_theme(theme='dark')
             self.initialize_widgets()
             self.initialize_player()
         else:
             self.var_theme.set('☀️')
             self.var_theme_is = 'light'
-            print(self.var_theme_is)
             self.configure_theme(theme='light')
             self.initialize_widgets()
             self.initialize_player()
