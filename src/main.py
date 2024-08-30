@@ -4,22 +4,23 @@ import pygame
 import os
 import time
 
-# === Constants === #
+# === Default Constants === #
 WIDTH = 720
 HEIGHT = 480
 BG_COLOR = '#D3EBCD'
 FG_COLOR = '#AEDBCE'
 BUTTON_COLOR = '#839AA8'
 SHADOW_COLOR = '#635666'
-
+BUTTON_TEXT_COLOR = BG_COLOR
 BUTTON_WIDTH = 8
 BUTTON_HEIGHT = 1
-BUTTON_FONT = ('Arial', 20, 'normal')
-BUTTON_TEXT_COLOR = SHADOW_COLOR
+CONTROL_BUTTON_FONT = ('Arial', 20, 'normal')
+BUTTON_FONT = ('Arial', 10, 'normal')
+TEXT_COLOR = 'black'
 
-FOOTER_FONT = ('Arial', 40, 'bold')
-
-# color palette for reference: https://colorhunt.co/palette/d3ebcdaedbce839aa8635666
+# color palettes for reference: 
+# https://colorhunt.co/palette/d3ebcdaedbce839aa8635666
+# https://colorhunt.co/palette/1e201e3c3d37697565ecdfcc
 
 # === Interface Configuration === #
 class Interface():
@@ -29,8 +30,36 @@ class Interface():
         self.root.resizable(False, False)
         self.root.iconbitmap('assets/ico32.ico')
 
+        self.var_theme_is = 'light'
+        self.configure_theme(theme='light')
         self.initialize_widgets()
         self.initialize_player()
+
+    def configure_theme(self, theme):
+        global BG_COLOR
+        global FG_COLOR
+        global BUTTON_COLOR
+        global SHADOW_COLOR
+        global BUTTON_TEXT_COLOR
+        global TEXT_COLOR
+
+        if theme == 'dark':
+            # === dark === #
+            BG_COLOR = '#1E201E'
+            FG_COLOR = '#3C3D37'
+            BUTTON_COLOR = '#697565'
+            SHADOW_COLOR = '#ECDFCC'
+            self.footer = tk.PhotoImage(file='assets/footer_dark.png')
+            TEXT_COLOR = 'white'
+        else:
+            # === light === #
+            BG_COLOR = '#D3EBCD'
+            FG_COLOR = '#AEDBCE'
+            BUTTON_COLOR = '#839AA8'
+            SHADOW_COLOR = '#635666'
+            self.footer = tk.PhotoImage(file='assets/footer_light.png')
+            TEXT_COLOR = 'black'
+        BUTTON_TEXT_COLOR = SHADOW_COLOR
 
     def initialize_widgets(self):
         
@@ -82,8 +111,9 @@ class Interface():
 
         style_song_info = ttk.Style()
         style_song_info.configure('Custom.TLabel',
-                            font=('Arial', 10, 'normal'),
-                            background=FG_COLOR)
+                            font=BUTTON_FONT,
+                            background=FG_COLOR,
+                            foreground=TEXT_COLOR)
         
         self.label_song_info = ttk.Label(self.frame_song_info, 
                                          textvariable=self.var_song_info,
@@ -98,14 +128,6 @@ class Interface():
         self.trackbar.place(x=20, y=160)
 
         self.var_progress = tk.DoubleVar().set(value=100)
-
-        # self.progress = ttk.Progressbar(self.trackbar,
-        #                           length=300,
-        #                           orient='horizontal',
-        #                           mode='determinate',
-        #                           style='TProgressbar'
-        #                           )
-        # self.progress.place(x=0, y=-2)
         
         self.progress = ttk.Scale(self.trackbar,
                                  length=300,
@@ -145,10 +167,10 @@ class Interface():
         # Initialize the buttons ⏮️⏯️⏭️
         self.button_prev = tk.Button(self.frame_main,
                                      text='⏮️',
-                                     font=BUTTON_FONT,
+                                     font=CONTROL_BUTTON_FONT,
                                      width=BUTTON_WIDTH,
                                      height=BUTTON_HEIGHT,
-                                     bg=FG_COLOR,
+                                     bg = FG_COLOR,
                                      fg=BUTTON_TEXT_COLOR,
                                      borderwidth=1,
                                      command=self.play_previous)
@@ -161,7 +183,7 @@ class Interface():
 
         self.button_pause = tk.Button(self.frame_main,
                                      textvariable=self.var_play,
-                                     font=BUTTON_FONT,
+                                     font=CONTROL_BUTTON_FONT,
                                      width=BUTTON_WIDTH,
                                      height=BUTTON_HEIGHT,
                                      bg=FG_COLOR,
@@ -172,7 +194,7 @@ class Interface():
 
         self.button_next = tk.Button(self.frame_main,
                                      text='⏭️',
-                                     font=BUTTON_FONT,
+                                     font=CONTROL_BUTTON_FONT,
                                      width=BUTTON_WIDTH,
                                      height=BUTTON_HEIGHT,
                                      bg=FG_COLOR,
@@ -191,7 +213,9 @@ class Interface():
         self.song_dict = {}
         self.playlist = tk.Listbox(self.frame_playlist,
                                    width=36,
-                                   height=24)
+                                   height=24,
+                                   bg=FG_COLOR,
+                                   fg=TEXT_COLOR,)
         self.playlist.place(x=0, y=0)
         self.playlist.bind('<<ListboxSelect>>', self.play_selected)
 
@@ -203,14 +227,28 @@ class Interface():
                                        width=10,
                                        height=1,
                                        bg=FG_COLOR,
-                                       fg='black',
+                                       fg=TEXT_COLOR,
                                        borderwidth=1,
                                        command=self.import_music)
         self.import_button.place(x=480, y=420)
+        
+        # Initialize theme toggle button
+        self.var_theme = tk.StringVar()
+        self.var_theme.set('☀️')
+
+        self.theme_toggle = tk.Button(self.frame_main,
+                                      textvariable=self.var_theme,
+                                      anchor='w',
+                                      font=BUTTON_FONT,
+                                      width=2,
+                                      height=1,
+                                      bg=FG_COLOR,
+                                      fg=TEXT_COLOR,
+                                      borderwidth=1,
+                                      command=self.change_theme)
+        self.theme_toggle.place(x=676, y=420)
 
         # Initialize footer
-        self.footer = tk.PhotoImage(file='assets/footer.png')
-
         self.footer_text = tk.Label(self.frame_main,
                                     image=self.footer,
                                     bg=BG_COLOR)
@@ -323,7 +361,6 @@ class Interface():
         if self.is_finished() and not self.is_lastsong() and not self.paused:
             self.play_next()
 
-
     def update_song_info(self):
         self.var_song_info.set(os.path.basename(self.current_song)[0:80])
         self.song_length = pygame.mixer.Sound(self.current_song).get_length()
@@ -336,6 +373,21 @@ class Interface():
                 self.song_dict[song_name] = file_path
                 self.playlist.insert(tk.END, song_name)
 
+    def change_theme(self):
+        if self.var_theme_is == 'light':
+            self.var_theme.set('🌙')
+            self.var_theme_is = 'dark'
+            print(self.var_theme_is)
+            self.configure_theme(theme='dark')
+            self.initialize_widgets()
+            self.initialize_player()
+        else:
+            self.var_theme.set('☀️')
+            self.var_theme_is = 'light'
+            print(self.var_theme_is)
+            self.configure_theme(theme='light')
+            self.initialize_widgets()
+            self.initialize_player()
 
 if __name__ == '__main__':
     root = tk.Tk()
