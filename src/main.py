@@ -165,7 +165,7 @@ class Interface():
                                      to=1,
                                      variable=self.var_volume,
                                      command=self.set_volume)
-        self.volume_scale.place(x=0, y=-2)
+        self.volume_scale.place(x=0, y=0)
 
 
         # Initialize the buttons ⏮️⏯️⏭️
