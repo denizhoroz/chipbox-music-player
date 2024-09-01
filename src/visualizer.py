@@ -39,7 +39,9 @@ def draw_sine_wave(amplitude):
     pygame.draw.lines(screen, (255, 255, 255), False, points, 2)
     pygame.display.flip()
 
-with wave.open(sys.argv[1], 'rb') as wf:
+filepath = 'samples\RiveR - Solo.wav'
+
+with wave.open(filepath, 'rb') as wf:
     p = pyaudio.PyAudio()
     stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
                     channels=wf.getnchannels(),
@@ -56,9 +58,8 @@ with wave.open(sys.argv[1], 'rb') as wf:
                 running = False
 
         data = wf.readframes(CHUNK)
-        stream.write(data)
-        amplitude_adjustment = get_audio_input_level(data=data) / 50
-        amplitude = max(10, amplitude_adjustment)
+        amplitude_adjustment = get_audio_input_level(data=data) / 100
+        amplitude = max(15, amplitude_adjustment)
 
         draw_sine_wave(amplitude=amplitude)
         clock.tick(60)
