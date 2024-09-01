@@ -1,6 +1,8 @@
 import pygame
 import math
 import pyaudio
+import sys
+import wave
 
 SCREEN_WIDTH = 500
 SCREEN_HEIGHT = 500
@@ -15,16 +17,7 @@ FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 44100
 
-p = pyaudio.PyAudio()
-stream = p.open(format=FORMAT,
-                channels=CHANNELS,
-                rate=RATE,
-                input=True,
-                frames_per_buffer=CHUNK,)
-
-
-def get_audio_input_level():
-    data = stream.read(CHUNK)
+def get_audio_input_level(data):
     rms = 0
     for i in range(0, len(data), 2):
         sample = int.from_bytes(data[i:i + 2], byteorder='little', signed=True)
@@ -46,19 +39,29 @@ def draw_sine_wave(amplitude):
     pygame.draw.lines(screen, (255, 255, 255), False, points, 2)
     pygame.display.flip()
 
-running = True
-amplitude = 100
+with wave.open(sys.argv[1], 'rb') as wf:
+    p = pyaudio.PyAudio()
+    stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
+                    channels=wf.getnchannels(),
+                    rate=wf.getframerate(),
+                    output=True,
+                    frames_per_buffer=CHUNK)
 
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+    running = True
+    amplitude = 100
 
-    amplitude_adjustment = get_audio_input_level() / 50
-    amplitude = max(10, amplitude_adjustment)
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
 
-    draw_sine_wave(amplitude=amplitude)
-    print(get_audio_input_level())
-    clock.tick(60)
+        data = wf.readframes(CHUNK)
+        stream.write(data)
+        amplitude_adjustment = get_audio_input_level(data=data) / 50
+        amplitude = max(10, amplitude_adjustment)
+
+        draw_sine_wave(amplitude=amplitude)
+        print(get_audio_input_level(data=data))
+        clock.tick(60)
 
 pygame.quit()
