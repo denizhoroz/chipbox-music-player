@@ -378,15 +378,21 @@ class Interface():
         if self.var_theme_is == 'light':
             self.var_theme.set('🌙')
             self.var_theme_is = 'dark'
+            self.destroy_app()
             self.configure_theme(theme='dark')
             self.initialize_widgets()
             self.initialize_player()
         else:
             self.var_theme.set('☀️')
             self.var_theme_is = 'light'
+            self.destroy_app()
             self.configure_theme(theme='light')
             self.initialize_widgets()
             self.initialize_player()
+
+    def destroy_app(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
 
 if __name__ == '__main__':
     root = tk.Tk()

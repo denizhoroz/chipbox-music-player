@@ -1,7 +1,12 @@
-import pyaudio
 import pygame
 import math
+import pyaudio
 
+SCREEN_WIDTH = 500
+SCREEN_HEIGHT = 500
+pygame.init()
+pygame.display.set_caption('Gerald Visualiser')
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 clock = pygame.time.Clock()
 
 # === Initialize Audio === #
@@ -28,4 +33,32 @@ def get_audio_input_level():
     return rms
 
 def draw_sine_wave(amplitude):
-    pass
+    screen.fill((0, 0, 0))
+    points = []
+    if amplitude > 10:
+        for x in range(SCREEN_WIDTH):
+            y = SCREEN_HEIGHT / 2 + int(amplitude * math.sin(x * 0.02))
+            points.append((x, y))
+    else:
+        points.append((0, SCREEN_WIDTH / 2))
+        points.append((SCREEN_WIDTH, SCREEN_HEIGHT))
+
+    pygame.draw.lines(screen, (255, 255, 255), False, points, 2)
+    pygame.display.flip()
+
+running = True
+amplitude = 100
+
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    amplitude_adjustment = get_audio_input_level() / 50
+    amplitude = max(10, amplitude_adjustment)
+
+    draw_sine_wave(amplitude=amplitude)
+    print(get_audio_input_level())
+    clock.tick(60)
+
+pygame.quit()
