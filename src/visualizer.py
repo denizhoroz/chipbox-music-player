@@ -61,7 +61,6 @@ with wave.open(sys.argv[1], 'rb') as wf:
         amplitude = max(10, amplitude_adjustment)
 
         draw_sine_wave(amplitude=amplitude)
-        print(get_audio_input_level(data=data))
         clock.tick(60)
 
 pygame.quit()

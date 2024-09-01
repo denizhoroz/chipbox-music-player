@@ -393,6 +393,7 @@ class Interface():
     def destroy_app(self):
         for widget in self.root.winfo_children():
             widget.destroy()
+        pygame.mixer.music.stop()
 
 if __name__ == '__main__':
     root = tk.Tk()
