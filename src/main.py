@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox, filedialog
 import pygame
 import os
 import time
+from visualizer import Visualizer
 
 # === Default Constants === #
 WIDTH = 720
@@ -90,15 +91,17 @@ class Interface():
                                   foreground=SHADOW_COLOR)
         self.duration.place(x=8, y=5)
 
-        # Initialize the audio spectrum
-        self.spectrum = tk.Frame(self.frame_main,
+        # Initialize the audio visualizer
+        self.frame_visualizer = tk.Frame(self.frame_main,
                                  width=300,
                                  height=80,
                                  bg=FG_COLOR,
                                  highlightbackground=BUTTON_COLOR,
                                  highlightthickness=1)
-        self.spectrum.place(x=160, y=20)
+        self.frame_visualizer.place(x=160, y=20)
 
+        self.initialize_visualizer()
+        
         # Initialize the song information area
         self.frame_song_info = tk.Frame(self.frame_main,
                                   width=440,
@@ -262,10 +265,16 @@ class Interface():
     def play_selected(self, event):
         selected_song = list(self.song_dict.values())[self.playlist.curselection()[0]]
         self.current_song = selected_song
+
         pygame.mixer.music.load(self.current_song)
+        pygame.mixer.music.play()
+
         self.update_song_info()
         self.progress.config(to=self.song_length)
-        pygame.mixer.music.play()
+
+        self.visualizer.load_file(self.current_song)
+        self.visualizer.run()
+
         self.song_start_time = time.time()
         self.update_progress()
         self.var_play.set('⏸️')
@@ -395,10 +404,22 @@ class Interface():
             widget.destroy()
         pygame.mixer.music.stop()
 
+    def initialize_visualizer(self):
+        os.environ['SDL_WINDOWID'] = str(self.frame_visualizer.winfo_id())
+        os.environ['SDL_VIDEODRIVER'] = 'windib'
+
+        self.visualizer = Visualizer(300, 80)
+        pygame.display.update()
+
+def on_closing():
+        pygame.quit()
+        root.destroy()
+
 if __name__ == '__main__':
     root = tk.Tk()
     root.title('Chipbox')
     interface = Interface(root)
+            
+    root.protocol('WM_DELETE_WINDOW', on_closing)
+    running = True
     root.mainloop()
-
-
